@@ -1,0 +1,7 @@
+{
+	"name": "SelfHosted-IR",
+	"properties": {
+		"type": "SelfHosted",
+		"description": "to connect with on-prem systems"
+	}
+}
