@@ -1,0 +1,20 @@
+{
+	"name": "jsoninputfile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "lnk_Shirishastorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "shirisha.shyamrao@birlasoft.com",
+				"container": "archivefilescontainer"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,320 @@
+{
+	"name": "LoggingDemoSiri",
+	"properties": {
+		"activities": [
+			{
+				"name": "get the Orders",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ExcelSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "sourcefile",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Destination",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "generate files",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "files to be generated",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "dataflow1",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "send mail",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "generate files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-39.eastus.logic.azure.com:443/workflows/28de3d6e36074c8e9ca43fd31a68642e/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Vaeh5XM7589zFWAlvgsiJu1Uw4t2Zl9HVKTzCBWZENU",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"Pipelinename\":\"@{pipeline().Pipeline}\",\n\"dataFactoryName\":\"@{pipeline().DataFactory}\",\n\"pipleine runid\":\"@{pipeline().RunId}\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Got the order",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "get the Orders",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-64.eastus.logic.azure.com:443/workflows/25791b91cc5144a2834a34ed99d8ba19/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y0dSQWaK4dGIGkKVY5NDRFdWZ4ZI6TV2Qy_54kggO8",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"ProjectName\": \"DigitalTask\",\n\"Interface\":\"ProcessPurchaseReceipt\",\n\"OrderId\": \"5632901\", \n\"Level\": \"Info\",\n\"Message\": \"ADF Started ProcessPurchaseReceipt\" ,\n\"MessageContent\": \"Received Orders and the pipeline : @{pipeline().Pipeline} is Started\",\n\"ErrorMessage\": \"\",\n\"RunId\": \"@{pipeline().RunId}\",\n\"Source\": \"AzureDataFactory\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Transforming",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Got the order",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-64.eastus.logic.azure.com:443/workflows/25791b91cc5144a2834a34ed99d8ba19/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y0dSQWaK4dGIGkKVY5NDRFdWZ4ZI6TV2Qy_54kggO8",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"ProjectName\": \"DigitalTask\",\n\"Interface\":\"ProcessPurchaseReceipt\",\n\"OrderId\": \"5632901\", \n\"Level\": \"Info\",\n\"Message\": \"Order details transformed\" ,\n\"MessageContent\": \"succesfully transformed the order data to text file\",\n\"ErrorMessage\": \"\",\n\"RunId\": \"@{pipeline().RunId}\",\n\"Source\": \"AzureDataFactory\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "files to be generated",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Transforming",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-64.eastus.logic.azure.com:443/workflows/25791b91cc5144a2834a34ed99d8ba19/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y0dSQWaK4dGIGkKVY5NDRFdWZ4ZI6TV2Qy_54kggO8",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"ProjectName\": \"DigitalTask\",\n\"Interface\":\"ProcessPurchaseReceipt\",\n\"OrderId\": \"5632901\", \n\"Level\": \"Info\",\n\"Message\": \"ADF Dataflow Started ProcessPurchaseReceipt\" ,\n\"MessageContent\": \"Files to be generated into sub categories\",\n\"ErrorMessage\": \"\",\n\"RunId\": \"@{pipeline().RunId}\",\n\"Source\": \"AzureDataFactory\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Files generated",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "generate files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-64.eastus.logic.azure.com:443/workflows/25791b91cc5144a2834a34ed99d8ba19/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y0dSQWaK4dGIGkKVY5NDRFdWZ4ZI6TV2Qy_54kggO8",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"ProjectName\": \"DigitalTask\",\n\"Interface\":\"ProcessPurchaseReceipt\",\n\"OrderId\": \"5632901\", \n\"Level\": \"Info\",\n\"Message\": \"ADF Dataflow Started ProcessPurchaseReceipt\" ,\n\"MessageContent\": \"Pipeline : @{pipeline().Pipeline} has been completed succesfully\",\n\"ErrorMessage\": \"\",\n\"RunId\": \"@{pipeline().RunId}\",\n\"Source\": \"AzureDataFactory\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Invalid Category",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "generate files",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-64.eastus.logic.azure.com:443/workflows/25791b91cc5144a2834a34ed99d8ba19/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y0dSQWaK4dGIGkKVY5NDRFdWZ4ZI6TV2Qy_54kggO8",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"ProjectName\": \"DigitalTask\",\n\"Interface\":\"ProcessPurchaseReceipt\",\n\"OrderId\": \"5632901\", \n\"Level\": \"Error\",\n\"Message\": \"Data flow is failed \" ,\n\"MessageContent\": \"files Can not be  generated based we have received invalid category of the product\",\n\"ErrorMessage\": \"Category is invalid, It should not be null as it is partitioning key \",\n\"RunId\": \"@{pipeline().RunId}\",\n\"Source\": \"AzureDataFactory\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Mail triggered",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "send mail",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-64.eastus.logic.azure.com:443/workflows/25791b91cc5144a2834a34ed99d8ba19/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y0dSQWaK4dGIGkKVY5NDRFdWZ4ZI6TV2Qy_54kggO8",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"ProjectName\": \"DigitalTask\",\n\"Interface\":\"ProcessPurchaseReceipt\",\n\"OrderId\": \"5632901\", \n\"Level\": \"Info\",\n\"Message\": \"ProcessPurchaseReceipt data sent to processing team\" ,\n\"MessageContent\": \"Order details have been sent to processing team\",\n\"ErrorMessage\": \"\",\n\"RunId\": \"@{pipeline().RunId}\",\n\"Source\": \"AzureDataFactory\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Process the order",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Mail triggered",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod-64.eastus.logic.azure.com:443/workflows/25791b91cc5144a2834a34ed99d8ba19/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y0dSQWaK4dGIGkKVY5NDRFdWZ4ZI6TV2Qy_54kggO8",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"ProjectName\": \"DigitalTask\",\n\"Interface\":\"ProcessPurchaseReceipt\",\n\"OrderId\": \"5632901\", \n\"Level\": \"Info\",\n\"Message\": \"Team has processed  the order and generated Invoice number\" ,\n\"MessageContent\": \"Invoice number is generated\",\n\"ErrorMessage\": \"\",\n\"RunId\": \"@{pipeline().RunId}\",\n\"Source\": \"AzureDataFactory\",\n\"InvoiceId\" : \"@{guid()}\"\n}",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2023-10-09T06:59:30Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,9 @@
+{
+	"name": "ADFShirishafirst",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "67b38dac-6592-4220-945e-8a18179ef625",
+		"tenantId": "84d0d24c-8292-4d4e-bd0a-ba70de0f6ddd"
+	}
+}
